@@ -4,6 +4,9 @@
   "description": "",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "c2c": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
@@ -19,7 +22,8 @@
     "bonjour-service": "^1.3.0",
     "chokidar": "^5.0.0",
     "uuid": "^14.0.0",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "zod": "^4.4.2"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
