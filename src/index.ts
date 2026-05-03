@@ -49,7 +49,7 @@ function parseArgs(): { project: string; name: string; port: number; ignore: str
   return { project, name, port, ignore };
 }
 
-async function main() {
+export async function main() {
   const config = parseArgs();
   const nodeId = uuid();
 
@@ -232,7 +232,9 @@ function handlePacket(
   }
 }
 
-main().catch((err) => {
-  console.error("c2c failed to start:", err);
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith("index.js")) {
+  main().catch((err) => {
+    console.error("c2c failed to start:", err);
+    process.exit(1);
+  });
+}

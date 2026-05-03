@@ -1,21 +1,30 @@
 {
-  "name": "c2c",
-  "version": "1.0.0",
-  "description": "",
+  "name": "c2c-mcp",
+  "version": "0.1.0",
+  "description": "LAN-based collaboration for Claude Code instances via MCP — share intent, file changes, and async messages between peers",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "c2c": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "skill"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm build",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["mcp", "claude-code", "collaboration", "lan", "peer-to-peer"],
+  "author": "CLCK0622",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CLCK0622/c2c-mcp.git"
+  },
   "packageManager": "pnpm@10.28.2",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

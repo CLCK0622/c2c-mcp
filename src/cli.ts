@@ -3,11 +3,6 @@
 import { execSync } from "node:child_process";
 import { createServer } from "node:net";
 import { basename, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 function findAvailablePort(start: number): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -28,7 +23,6 @@ function findAvailablePort(start: number): Promise<number> {
 async function init() {
   const projectDir = resolve(process.cwd());
   const name = basename(projectDir);
-  const serverScript = join(__dirname, "index.js");
 
   console.log(`Setting up c2c for project: ${name}`);
   console.log(`Project directory: ${projectDir}`);
@@ -36,16 +30,9 @@ async function init() {
   const port = await findAvailablePort(9100);
   console.log(`Using port: ${port}`);
 
-  const args = [
-    serverScript,
-    "--project", projectDir,
-    "--name", name,
-    "--port", String(port),
-  ];
-
   try {
     execSync(
-      `claude mcp add c2c -s project -- node ${args.map((a) => `"${a}"`).join(" ")}`,
+      `claude mcp add c2c -s project -- npx c2c-mcp serve --project "${projectDir}" --name "${name}" --port ${port}`,
       { stdio: "inherit", cwd: projectDir }
     );
     console.log(`\nDone. c2c is ready for "${name}" on port ${port}.`);
@@ -65,6 +52,11 @@ function remove() {
   }
 }
 
+async function serve() {
+  const { main } = await import("./index.js");
+  await main();
+}
+
 const command = process.argv[2];
 
 switch (command) {
@@ -74,9 +66,13 @@ switch (command) {
   case "remove":
     remove();
     break;
+  case "serve":
+    serve();
+    break;
   default:
     console.log("Usage:");
     console.log("  c2c init     Set up c2c for the current project");
     console.log("  c2c remove   Remove c2c from the current project");
+    console.log("  c2c serve    Start the MCP server (used by Claude Code)");
     break;
 }
