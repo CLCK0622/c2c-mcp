@@ -1,6 +1,6 @@
 {
   "name": "c2c-mcp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "LAN-based collaboration for Claude Code instances via MCP — share intent, file changes, and async messages between peers",
   "type": "module",
   "main": "dist/index.js",
