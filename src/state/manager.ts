@@ -99,4 +99,26 @@ export class StateManager {
       return true;
     });
   }
+
+  addMessage(message: PeerMessage): void {
+    this.inbox.push(message);
+  }
+
+  getUnreadMessages(): PeerMessage[] {
+    return this.inbox
+      .filter((m) => m.status === "pending")
+      .map((m) => ({ ...m }));
+  }
+
+  getUnreadCount(): number {
+    return this.inbox.filter((m) => m.status === "pending").length;
+  }
+
+  readAllMessages(): PeerMessage[] {
+    const unread = this.inbox.filter((m) => m.status === "pending");
+    for (const msg of unread) {
+      msg.status = "read";
+    }
+    return unread.map((m) => ({ ...m }));
+  }
 }

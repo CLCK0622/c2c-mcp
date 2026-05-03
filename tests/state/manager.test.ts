@@ -223,3 +223,64 @@ describe("StateManager — File Changes", () => {
     expect(state.getFileChanges()).toHaveLength(1);
   });
 });
+
+describe("StateManager — Inbox", () => {
+  let state: StateManager;
+
+  beforeEach(() => {
+    state = new StateManager("node-1", "alice");
+  });
+
+  it("adds a message to inbox", () => {
+    state.addMessage({
+      id: "msg-1",
+      from: "node-2",
+      to: "node-1",
+      content: "Are you changing the /users endpoint?",
+      timestamp: Date.now(),
+      status: "pending",
+    });
+    const msgs = state.getUnreadMessages();
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].content).toBe("Are you changing the /users endpoint?");
+  });
+
+  it("marks messages as read", () => {
+    state.addMessage({
+      id: "msg-1",
+      from: "node-2",
+      to: "node-1",
+      content: "hello",
+      timestamp: Date.now(),
+      status: "pending",
+    });
+    const read = state.readAllMessages();
+    expect(read).toHaveLength(1);
+    expect(read[0].status).toBe("read");
+
+    const unread = state.getUnreadMessages();
+    expect(unread).toHaveLength(0);
+  });
+
+  it("returns unread count", () => {
+    state.addMessage({
+      id: "msg-1",
+      from: "node-2",
+      to: "node-1",
+      content: "hello",
+      timestamp: Date.now(),
+      status: "pending",
+    });
+    state.addMessage({
+      id: "msg-2",
+      from: "node-2",
+      to: "node-1",
+      content: "world",
+      timestamp: Date.now(),
+      status: "pending",
+    });
+    expect(state.getUnreadCount()).toBe(2);
+    state.readAllMessages();
+    expect(state.getUnreadCount()).toBe(0);
+  });
+});
