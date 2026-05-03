@@ -2,6 +2,9 @@
 
 # c2c
 
+[![npm version](https://img.shields.io/npm/v/c2c-mcp)](https://www.npmjs.com/package/c2c-mcp)
+[![license](https://img.shields.io/npm/l/c2c-mcp)](./LICENSE)
+
 **Connect your Claude Code instances. Let them talk to each other.**
 
 c2c is an [MCP](https://modelcontextprotocol.io/) server that connects multiple Claude Code sessions over your local network.
