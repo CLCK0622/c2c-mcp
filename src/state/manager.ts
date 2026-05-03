@@ -61,4 +61,42 @@ export class StateManager {
   removePeer(nodeId: string): void {
     this.peers.delete(nodeId);
   }
+
+  addFileChange(change: FileChange): void {
+    this.fileChanges.push(change);
+  }
+
+  getFileChanges(): FileChange[] {
+    return this.fileChanges.map((c) => ({
+      ...c,
+      fetchedBy: new Set(c.fetchedBy),
+    }));
+  }
+
+  getFileChangesForPeer(peerId: string): FileChange[] {
+    return this.fileChanges
+      .filter((c) => !c.fetchedBy.has(peerId))
+      .map((c) => ({
+        ...c,
+        fetchedBy: new Set(c.fetchedBy),
+      }));
+  }
+
+  markChangesFetchedBy(peerId: string): void {
+    for (const change of this.fileChanges) {
+      change.fetchedBy.add(peerId);
+    }
+  }
+
+  cleanupFileChanges(): void {
+    const now = Date.now();
+    const maxAge = 30 * 60 * 1000;
+    const connectedCount = this.getConnectedPeers().length;
+
+    this.fileChanges = this.fileChanges.filter((c) => {
+      if (now - c.timestamp > maxAge) return false;
+      if (connectedCount > 0 && c.fetchedBy.size >= connectedCount) return false;
+      return true;
+    });
+  }
 }

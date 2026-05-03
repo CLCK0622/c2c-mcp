@@ -98,3 +98,128 @@ describe("StateManager — Peers", () => {
     expect(connected[0].nodeId).toBe("node-2");
   });
 });
+
+describe("StateManager — File Changes", () => {
+  let state: StateManager;
+
+  beforeEach(() => {
+    state = new StateManager("node-1", "alice");
+  });
+
+  it("adds a file change", () => {
+    state.addFileChange({
+      id: "fc-1",
+      filePath: "src/app.ts",
+      changeType: "modify",
+      timestamp: Date.now(),
+      diffSummary: "+console.log('hello')",
+      fetchedBy: new Set(),
+    });
+    const changes = state.getFileChanges();
+    expect(changes).toHaveLength(1);
+    expect(changes[0].filePath).toBe("src/app.ts");
+  });
+
+  it("returns unfetched changes for a peer", () => {
+    state.addFileChange({
+      id: "fc-1",
+      filePath: "src/app.ts",
+      changeType: "modify",
+      timestamp: Date.now(),
+      diffSummary: "diff1",
+      fetchedBy: new Set(),
+    });
+    state.addFileChange({
+      id: "fc-2",
+      filePath: "src/index.ts",
+      changeType: "modify",
+      timestamp: Date.now(),
+      diffSummary: "diff2",
+      fetchedBy: new Set(["node-2"]),
+    });
+    const changes = state.getFileChangesForPeer("node-2");
+    expect(changes).toHaveLength(1);
+    expect(changes[0].id).toBe("fc-1");
+  });
+
+  it("marks changes as fetched by a peer", () => {
+    state.addFileChange({
+      id: "fc-1",
+      filePath: "src/app.ts",
+      changeType: "modify",
+      timestamp: Date.now(),
+      diffSummary: "diff",
+      fetchedBy: new Set(),
+    });
+    state.markChangesFetchedBy("node-2");
+    const changes = state.getFileChangesForPeer("node-2");
+    expect(changes).toHaveLength(0);
+  });
+
+  it("cleans up changes fetched by all connected peers", () => {
+    state.addPeer({
+      nodeId: "node-2",
+      nodeName: "bob",
+      status: "connected",
+      wsPort: 9100,
+      host: "192.168.1.10",
+      currentTask: "",
+      lastSeen: Date.now(),
+    });
+    state.addPeer({
+      nodeId: "node-3",
+      nodeName: "carol",
+      status: "connected",
+      wsPort: 9101,
+      host: "192.168.1.11",
+      currentTask: "",
+      lastSeen: Date.now(),
+    });
+    state.addFileChange({
+      id: "fc-1",
+      filePath: "src/app.ts",
+      changeType: "modify",
+      timestamp: Date.now(),
+      diffSummary: "diff",
+      fetchedBy: new Set(["node-2", "node-3"]),
+    });
+    state.cleanupFileChanges();
+    expect(state.getFileChanges()).toHaveLength(0);
+  });
+
+  it("cleans up changes older than 30 minutes", () => {
+    const thirtyOneMinutesAgo = Date.now() - 31 * 60 * 1000;
+    state.addFileChange({
+      id: "fc-old",
+      filePath: "src/old.ts",
+      changeType: "modify",
+      timestamp: thirtyOneMinutesAgo,
+      diffSummary: "old diff",
+      fetchedBy: new Set(),
+    });
+    state.cleanupFileChanges();
+    expect(state.getFileChanges()).toHaveLength(0);
+  });
+
+  it("keeps changes not yet fetched by all peers", () => {
+    state.addPeer({
+      nodeId: "node-2",
+      nodeName: "bob",
+      status: "connected",
+      wsPort: 9100,
+      host: "192.168.1.10",
+      currentTask: "",
+      lastSeen: Date.now(),
+    });
+    state.addFileChange({
+      id: "fc-1",
+      filePath: "src/app.ts",
+      changeType: "modify",
+      timestamp: Date.now(),
+      diffSummary: "diff",
+      fetchedBy: new Set(),
+    });
+    state.cleanupFileChanges();
+    expect(state.getFileChanges()).toHaveLength(1);
+  });
+});
