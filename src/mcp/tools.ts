@@ -147,7 +147,7 @@ export function registerTools(
 
       const lines = peers.map(
         (p) =>
-          `- ${p.nodeName} (${p.nodeId.slice(0, 8)}...): ${p.status}${p.currentTask ? ` | Task: ${p.currentTask}` : ""}`
+          `- ${p.nodeName} [${p.nodeId}]: ${p.status}${p.currentTask ? ` | Task: ${p.currentTask}` : ""}`
       );
 
       return {
