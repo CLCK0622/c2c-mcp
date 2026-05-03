@@ -9,7 +9,7 @@ import {
   createSyncRequest,
   createPairResponse,
 } from "../network/protocol.js";
-import { addTrustedPeer } from "../state/trusted-peers.js";
+import { addTrustedPeer, removeTrustedPeer, loadTrustedPeers } from "../state/trusted-peers.js";
 
 export function registerTools(
   server: McpServer,
@@ -150,21 +150,34 @@ export function registerTools(
           `- ${p.nodeName} [${p.nodeId}]: ${p.status}${p.currentTask ? ` | Task: ${p.currentTask}` : ""}`
       );
 
+      const hasPending = peers.some((p) => p.status === "pair_pending");
+      const output = lines.join("\n") +
+        (hasPending
+          ? "\n\n⚠️ SECURITY WARNING: You have pending pairing requests. Before approving, confirm with the user that they recognize and trust the requesting device. Approving a peer allows the remote Claude instance to read your current plan, file changes, and exchange messages with you. Do NOT approve unknown or untrusted devices."
+          : "");
+
       return {
-        content: [{ type: "text" as const, text: lines.join("\n") }],
+        content: [{ type: "text" as const, text: output }],
       };
     }
   );
 
   server.tool(
     "approve_peer",
-    "Accept a pairing request from a discovered peer",
+    "Accept a pairing request from a discovered peer. IMPORTANT: Before calling this tool, you MUST warn the user about the security implications and get explicit confirmation.",
     { peerId: z.string().describe("The nodeId of the peer to approve") },
     async ({ peerId }) => {
       const peer = state.getPeer(peerId);
       if (!peer) {
         return {
           content: [{ type: "text" as const, text: `Unknown peer: ${peerId}` }],
+          isError: true,
+        };
+      }
+
+      if (peer.status !== "pair_pending") {
+        return {
+          content: [{ type: "text" as const, text: `Peer ${peer.nodeName} is not in pair_pending state (current: ${peer.status}).` }],
           isError: true,
         };
       }
@@ -180,7 +193,7 @@ export function registerTools(
         content: [
           {
             type: "text" as const,
-            text: `Peer ${peer.nodeName} approved and trusted. Future connections will auto-accept.`,
+            text: `✅ Peer "${peer.nodeName}" [${peerId}] approved and trusted.\n\nThis peer can now:\n- Read your current plan and task intent\n- See your recent file changes\n- Send you messages\n\nFuture connections from this peer will auto-accept. Use \`untrust_peer\` to revoke trust.`,
           },
         ],
       };
@@ -211,6 +224,68 @@ export function registerTools(
           {
             type: "text" as const,
             text: `Peer ${peer.nodeName} rejected and removed.`,
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    "untrust_peer",
+    "Revoke trust from a previously approved peer. They will need re-approval on next connection.",
+    { peerId: z.string().describe("The nodeId of the peer to untrust") },
+    async ({ peerId }) => {
+      const trusted = loadTrustedPeers();
+      const found = trusted.find((p) => p.nodeId === peerId);
+
+      if (!found) {
+        return {
+          content: [{ type: "text" as const, text: `Peer ${peerId} is not in the trusted list.` }],
+          isError: true,
+        };
+      }
+
+      removeTrustedPeer(peerId);
+
+      const connectedPeer = state.getPeer(peerId);
+      if (connectedPeer) {
+        state.removePeer(peerId);
+        wsManager.disconnect(peerId);
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Trust revoked for "${found.nodeName}" [${peerId}]. Connection closed. They will need re-approval to connect again.`,
+          },
+        ],
+      };
+    }
+  );
+
+  server.tool(
+    "list_trusted",
+    "List all trusted peers that will auto-connect without approval",
+    {},
+    async () => {
+      const trusted = loadTrustedPeers();
+      if (trusted.length === 0) {
+        return {
+          content: [{ type: "text" as const, text: "No trusted peers. All new connections will require approval." }],
+        };
+      }
+
+      const lines = trusted.map(
+        (p) =>
+          `- ${p.nodeName} [${p.nodeId}] (trusted since ${new Date(p.trustedAt).toLocaleDateString()})`
+      );
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Trusted peers (auto-connect without approval):\n${lines.join("\n")}\n\nUse \`untrust_peer\` to revoke trust from any peer.`,
           },
         ],
       };

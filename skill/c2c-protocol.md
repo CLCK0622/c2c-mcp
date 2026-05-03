@@ -7,6 +7,16 @@ description: Collaboration protocol for Claude Code instances connected via c2c 
 
 When the c2c MCP server is active and peers are connected, follow these rules:
 
+## Pairing Security
+
+When a new peer is discovered with `pair_pending` status, you MUST:
+
+1. Tell the user clearly: "A device named [name] wants to pair with your Claude instance. If approved, it will be able to read your current task, see your recent file changes, and exchange messages with you. Only approve devices you recognize and trust."
+2. Wait for the user's explicit confirmation before calling `approve_peer`.
+3. Never auto-approve. Never approve without informing the user first.
+
+If the user wants to review or revoke trust later, use `list_trusted` and `untrust_peer`.
+
 ## Every Conversation Turn
 
 1. Call `check_messages` to read any unread messages from peers.
