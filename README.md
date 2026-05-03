@@ -1,10 +1,17 @@
+<div align="center">
+
 # c2c
 
 **Connect your Claude Code instances. Let them talk to each other.**
 
-c2c is an [MCP](https://modelcontextprotocol.io/) server that connects multiple Claude Code sessions over your local network. When one agent changes an API, the other one knows. When one agent has a question, it can ask.
+c2c is an [MCP](https://modelcontextprotocol.io/) server that connects multiple Claude Code sessions over your local network.
+When one agent changes an API, the other one knows. When one agent has a question, it can ask.
 
 No cloud. No config server. Just mDNS discovery and WebSocket on your LAN.
+
+[Quick Start](#quick-start) | [Tools](#tools-reference) | [How It Works](#how-it-works) | [中文](./README.zh-CN.md)
+
+</div>
 
 ---
 
