@@ -91,11 +91,12 @@ export class StateManager {
   cleanupFileChanges(): void {
     const now = Date.now();
     const maxAge = 30 * 60 * 1000;
-    const connectedCount = this.getConnectedPeers().length;
+    const connectedIds = this.getConnectedPeers().map((p) => p.nodeId);
 
     this.fileChanges = this.fileChanges.filter((c) => {
       if (now - c.timestamp > maxAge) return false;
-      if (connectedCount > 0 && c.fetchedBy.size >= connectedCount) return false;
+      if (connectedIds.length > 0 && connectedIds.every((id) => c.fetchedBy.has(id)))
+        return false;
       return true;
     });
   }
