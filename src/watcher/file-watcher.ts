@@ -1,4 +1,4 @@
-import chokidar from "chokidar";
+import chokidar, { type FSWatcher } from "chokidar";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
@@ -15,7 +15,7 @@ const DEFAULT_IGNORED_SEGMENTS = [
 const DEFAULT_IGNORED_EXTENSIONS = [".lock", ".map"];
 
 export class FileWatcher {
-  private watcher: chokidar.FSWatcher | null = null;
+  private watcher: FSWatcher | null = null;
   private projectRoot: string;
   private state: StateManager;
   private extraIgnored: string[];
@@ -43,9 +43,9 @@ export class FileWatcher {
       persistent: true,
     });
 
-    this.watcher.on("add", (filePath) => this.handleChange(filePath, "add"));
-    this.watcher.on("change", (filePath) => this.handleChange(filePath, "modify"));
-    this.watcher.on("unlink", (filePath) => this.handleChange(filePath, "delete"));
+    this.watcher.on("add", (filePath: string) => this.handleChange(filePath, "add"));
+    this.watcher.on("change", (filePath: string) => this.handleChange(filePath, "modify"));
+    this.watcher.on("unlink", (filePath: string) => this.handleChange(filePath, "delete"));
 
     await new Promise<void>((resolve) => {
       this.watcher!.on("ready", resolve);
